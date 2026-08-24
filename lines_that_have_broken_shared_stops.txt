@@ -1,0 +1,14 @@
+
+
+Linie z pustym setem: 3, 7, 8
+
+Linia 3 ma z jakiegoś powodu przejazd z końcowego na inny przystanek i nie został usunięty
+Linia 7 ma przejazdy które zmieniają część środkowej trasy
+Linia 8 ma
+
+Zamiast szukać środka indywidualnie dla każdego kursu, znajdź jedną stałą parę przystanków dla całej trasy (route_id):
+Wyciągnij najdłuższy pełny kurs na danej trasie i wybierz z niego dwie kolejne nazwy przystanków ($A$ i $B$).
+Sprawdzaj pozostałe kursy pod kątem tej stałej pary:
+Jeśli $A$ występuje przed $B$ $\rightarrow$ Kierunek 0
+Jeśli $B$ występuje przed $A$ $\rightarrow$ Kierunek 1
+Jeśli kurs nie ma ani $A$, ani $B$ (np. bardzo krótki zjazd do zajezdni) $\rightarrow$ przypisz kierunek po jego przystanku końcowym.
