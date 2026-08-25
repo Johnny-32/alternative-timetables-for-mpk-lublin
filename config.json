@@ -2,7 +2,7 @@
   "agencies": [
     {
       "agency_key": "MPK-Lublin",
-      "path": "lublin-zbiorkom-fixed.zip"
+      "path": "data/lublin-zbiorkom-fixed.zip"
     }
   ],
   "linkServiceToDays": true,

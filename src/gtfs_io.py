@@ -10,11 +10,12 @@ def load_gtfs(input_zip):
             if filename in {
                 'calendar_dates.txt',
                 'routes.txt',
-                'stops.txt',
                 'stop_times.txt',
                 'trips.txt'
             }:
                 files[filename] = pd.read_csv(z.open(filename))
+            elif filename == 'stops.txt':
+                files[filename] = pd.read_csv(z.open(filename), dtype={'stop_code': str})
             else:
                 files[filename] = z.read(filename)
 

@@ -20,10 +20,6 @@ def main(files):
     # Trim stop names
     stops['stop_name'] = stops['stop_name'].str.strip()
 
-    # stop_times = stop_times.sort_values(
-    #     ['trip_id', 'stop_sequence']
-    # ).copy()
-
     # Filter rows containing 'Zajezdnia' and containing NO fully uppercase words
     depot_stops_dict = (
         stops.loc[
@@ -36,28 +32,36 @@ def main(files):
         .to_dict()
     )
 
-    # Filter trips that include a deopt
-    depot_trip_ids = stop_times.loc[
-        stop_times['stop_id'].isin(depot_stops_dict.keys()),
-        'trip_id'
-    ].unique()
 
-    # Remove stop_times that are from a depot
-    stop_times = stop_times[
-            ~stop_times['trip_id'].isin(depot_trip_ids)
-    ]
-
-    # Remove trips that include a depot
-    trips = trips[
-            ~trips['trip_id'].isin(depot_trip_ids)
-    ]
 
     # Adding route_id and stop_name columns to stop_times df
 
     merged = stop_times.merge(trips[['trip_id', 'route_id']], on='trip_id')
     merged = merged.merge(stops[['stop_id', 'stop_name']], on='stop_id')
 
-    # merged = merged.sort_values(['trip_id', 'stop_sequence'])
+    # Filtering trips that only have 2 stops and at least one of them is a depot
+
+    two_stop_depot_trip_ids = []
+
+    for trip_id, trip_group in merged.groupby('trip_id'):
+        trip_length = trip_group['stop_sequence'].iloc[-1] + 1
+        if trip_length == 2 and trip_group['stop_id'].isin(depot_stops_dict.keys()).any():
+            two_stop_depot_trip_ids.append(trip_id)
+
+    # Remove 2 stop trips that are from a depot
+    merged = merged[
+        ~merged['trip_id'].isin(two_stop_depot_trip_ids)
+    ]
+
+    # Remove stop_times that are from a depot
+    stop_times = stop_times[
+            ~stop_times['trip_id'].isin(two_stop_depot_trip_ids)
+    ]
+
+    # Remove trips that include a depot
+    trips = trips[
+            ~trips['trip_id'].isin(two_stop_depot_trip_ids)
+    ]
 
     # Deleting trips from a terminus to a stop (they are not present in the MPK Lublin website),
     # while keeping shuttle services like line 'Gaj'

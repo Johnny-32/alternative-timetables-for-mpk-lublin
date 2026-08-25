@@ -4,12 +4,12 @@ from gtfs_io import load_gtfs, save_gtfs
 
 
 def main():
-    files = load_gtfs('lublin-zbiorkom.zip')
+    files = load_gtfs('data/lublin-zbiorkom.zip')
 
     files = add_service_categories(files)
     files = add_direction_id_and_headsigns(files)
 
-    save_gtfs(files, 'lublin-zbiorkom-fixed.zip')
+    save_gtfs(files, 'data/lublin-zbiorkom-fixed.zip')
 
 if __name__ == '__main__':
     main()
