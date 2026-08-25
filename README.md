@@ -1,5 +1,5 @@
 # New timetable for MPK Lublin buses
-This project aims to make a better looking and simpler timetable for MPK Lublin buses and also show some cool and useful features based on it.
+This project aims to make a better looking and more modern timetables for MPK Lublin
 
 ## Technologies
 - Python
