@@ -1,0 +1,32 @@
+{
+  "name": "timetables-for-mpk-lublin-with-gtfs-to_html",
+  "version": "1.0.0",
+  "description": "Will be completed in the future",
+  "main": "index.js",
+  "scripts": {
+    "preprocess": ".venv\\Scripts\\python main.py",
+    "build": "tsc",
+    "generate": "gtfs-to-html --configPath config.json",
+    "build-all": "npm run preprocess && npm run build && npm run generate"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Johnny-32/alternative-timetables-for-mpk-lublin.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Johnny-32/alternative-timetables-for-mpk-lublin/issues"
+  },
+  "homepage": "https://github.com/Johnny-32/alternative-timetables-for-mpk-lublin#readme",
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "gtfs-to-html": "file:./custom-gtfs-to-html"
+  },
+  "allowScripts": {
+    "puppeteer@25.9.0": true
+  }
+}

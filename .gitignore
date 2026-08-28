@@ -31,3 +31,11 @@ bin/
 
 ### PyCharm ###
 .venv
+
+### Node.js ###
+node_modules/
+
+### custom-gtfs-to-html ###
+custom-gtfs-to-html/node_modules/
+custom-gtfs-to-html/dist/
+custom-gtfs-to-html/build/

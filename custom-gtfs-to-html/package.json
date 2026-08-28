@@ -1,0 +1,127 @@
+{
+  "name": "gtfs-to-html",
+  "version": "2.13.4",
+  "private": false,
+  "description": "Build human readable transit timetables as HTML, PDF or CSV from GTFS",
+  "keywords": [
+    "transit",
+    "gtfs",
+    "gtfs-realtime",
+    "transportation",
+    "timetables"
+  ],
+  "homepage": "https://gtfstohtml.com",
+  "bugs": {
+    "url": "https://github.com/blinktaginc/gtfs-to-html/issues"
+  },
+  "repository": "git://github.com/blinktaginc/gtfs-to-html",
+  "license": "MIT",
+  "author": "Brendan Nee <brendan@blinktag.com>",
+  "contributors": [
+    "Evan Siroky <evan.siroky@yahoo.com>",
+    "Nathan Selikoff",
+    "Aaron Antrim <aaron@trilliumtransit.com>",
+    "Thomas Craig <thomas@trilliumtransit.com>",
+    "Holly Kvalheim",
+    "Pawajoro",
+    "Andrea Mignone",
+    "Evo Stamatov",
+    "Sebastian Knopf"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "docker",
+    "examples",
+    "scripts",
+    "views/default",
+    "config-sample.json"
+  ],
+  "bin": {
+    "gtfs-to-html": "dist/bin/gtfs-to-html.js"
+  },
+  "scripts": {
+    "build": "tsdown && node scripts/copy-browser-assets.js",
+    "typecheck": "tsc --noEmit",
+    "start": "node ./dist/app",
+    "prepare": "npm run build",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run typecheck"
+  },
+  "dependencies": {
+    "@turf/helpers": "^7.4.0",
+    "@turf/simplify": "^7.4.0",
+    "archiver": "^8.0.0",
+    "cli-table": "^0.3.11",
+    "css.escape": "^1.5.1",
+    "csv-stringify": "^6.8.3",
+    "express": "^5.2.1",
+    "gtfs": "^4.21.0",
+    "js-beautify": "^2.0.3",
+    "lodash-es": "^4.18.1",
+    "marked": "^18.0.10",
+    "moment": "^2.30.1",
+    "pug": "^3.0.4",
+    "puppeteer": "^25.8.0",
+    "sanitize-filename": "^1.6.4",
+    "sqlstring": "^2.3.3",
+    "toposort": "^2.0.2",
+    "xss": "^1.0.15",
+    "yargs": "^18.1.0",
+    "yoctocolors": "^2.2.0"
+  },
+  "devDependencies": {
+    "@maplibre/maplibre-gl-geocoder": "^1.9.4",
+    "@types/archiver": "^8.0.0",
+    "@types/cli-table": "^0.3.4",
+    "@types/css.escape": "^1.5.2",
+    "@types/express": "^5.0.6",
+    "@types/js-beautify": "^1.14.3",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^26",
+    "@types/pug": "^2.0.10",
+    "@types/sqlstring": "^2.3.2",
+    "@types/toposort": "^2.0.7",
+    "@types/yargs": "^17.0.35",
+    "anchorme": "^3.0.8",
+    "gtfs-realtime-pbf-js-module": "^1.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
+    "maplibre-gl": "^5.24.0",
+    "pbf": "^5.1.2",
+    "prettier": "^3.9.6",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">= 22"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "release-it": {
+    "github": {
+      "release": true
+    },
+    "plugins": {
+      "@release-it/keep-a-changelog": {
+        "filename": "CHANGELOG.md"
+      }
+    },
+    "hooks": {
+      "after:bump": "pnpm run build"
+    }
+  },
+  "prettier": {
+    "singleQuote": true
+  },
+  "lint-staged": {
+    "*.js": "prettier --write",
+    "*.ts": "prettier --write",
+    "*.json": "prettier --write"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true,
+    "puppeteer@25.9.0": true
+  }
+}

@@ -1,0 +1,27 @@
+.git
+.DS_Store
+.vscode
+
+# dependencies
+node_modules
+
+#input for use in devcontainer
+input
+
+# output
+html
+timetables
+assets
+
+# custom views
+views/custom
+
+# config files
+config*.json
+!config-sample*
+
+# docker
+docker/config*
+
+# Build files
+/dist

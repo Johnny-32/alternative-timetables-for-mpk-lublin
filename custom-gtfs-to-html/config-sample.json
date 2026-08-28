@@ -1,0 +1,23 @@
+{
+  "agencies": [
+    {
+      "agencyKey": "marintransit",
+      "url": "https://marintransit.gov/data/google_transit.zip",
+      "realtimeAlerts": {
+        "url": "https://api.marintransit.gov/alerts"
+      },
+      "realtimeTripUpdates": {
+        "url": "https://api.marintransit.gov/tripupdates"
+      },
+      "realtimeVehiclePositions": {
+        "url": "https://api.marintransit.gov/vehiclepositions"
+      }
+    }
+  ],
+  "linkStopUrls": true,
+  "menuType": "radio",
+  "noHead": false,
+  "outputFormat": "html",
+  "showMap": true,
+  "showOnlyTimepoint": true
+}
