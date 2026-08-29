@@ -36,6 +36,7 @@ bin/
 node_modules/
 
 ### custom-gtfs-to-html ###
+html/
 custom-gtfs-to-html/node_modules/
 custom-gtfs-to-html/dist/
 custom-gtfs-to-html/build/
