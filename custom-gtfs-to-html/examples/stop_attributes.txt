@@ -1,6 +1,0 @@
-stop_id,stop_city
-1001,"Fresno, CA"
-1002,"Fresno, CA"
-1003,"Hanford, CA"
-1004,"Hanford, CA"
-1005,"Lemoore, CA"
