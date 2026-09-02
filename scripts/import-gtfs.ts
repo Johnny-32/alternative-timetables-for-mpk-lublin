@@ -1,11 +1,11 @@
 import {importGtfs} from "gtfs";
-import {gtfsConfig} from "./config.js";
+import {gtfsConfig} from "../src/gtfs/config.js";
 
 const config = {
     ...gtfsConfig,
     agencies: [
         {
-            path: './data/lublin-zbiorkom-fixed.zip',
+            path: './data/gtfs-lublin.zip',
         }
     ]
 };

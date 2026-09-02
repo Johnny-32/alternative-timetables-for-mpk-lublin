@@ -4,11 +4,10 @@
   "description": "Will be completed in the future",
   "main": "index.js",
   "scripts": {
-    "preprocess": ".venv\\Scripts\\python.exe src/gtfs/main.py",
     "build": "tsc",
-    "import": "tsx src/gtfs/import-gtfs.ts",
+    "import": "tsx scripts/import-gtfs.ts",
     "generate": "tsx src/index.ts",
-    "build-all": "npm run preprocess && npm run build && npm run import && npm run generate"
+    "build-all": "npm run build && npm run import && npm run generate"
   },
   "repository": {
     "type": "git",
