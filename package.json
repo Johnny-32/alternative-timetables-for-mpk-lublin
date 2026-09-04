@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/Johnny-32/alternative-timetables-for-mpk-lublin#readme",
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.4.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
@@ -30,6 +32,7 @@
     "esbuild@0.28.2": true
   },
   "dependencies": {
+    "adm-zip": "^0.6.0",
     "gtfs": "^4.21.0"
   }
 }

@@ -12,26 +12,25 @@ This project aims to make a better looking and simpler timetable for MPK Lublin 
 ## Graphical side - two paths: via line, via stop
 
 ### Via line:
-### First page - inspired by wtp.waw.pl
-"select a line:" header with all the lines grouped by type bus, trolleybus, night bus,
-(maybe special lines and express lines)
-Lines that don't run for the selected day will be grayed out
-### Line page - inspired by wtp.waw.pl
-With stop numbers and street names like in Warsaw
-Choosing direction and within direction trip patterns like in Berlin
-### Stop page for a line - e.g. Plac Litewski 02 for line 32 - inspired by wtp.waw.pl "rozkład jazdy"
-Timetable in a format: first column as hours rest as minutes
+### First page - inspired by mpk.krakow.pl
+List of lines grouped by type bus, trolleybus, night bus (maybe special lines and express lines)
+### Line page - inspired by jakdojade.pl
+Without "Main route" only with "All variants"
+Add all trip headsigns (e.g. 150 Mełgiewska WSEI/Pancerniaków)
+### Stop page for a line - inspired by jakdojade.pl "Show full timetable"
 Ability to choose for which the day the timetable is valid (out of 9 days)
 
 ### Via stop:
 ### First page - inspired by wtp.waw.pl
 Long list of all stops including a search feature, stops don't include stop numbers id's so e.g. Plac Litewski
 ### Stop page group - e.g. Plac Litewski - inspired by wtp.waw.pl
-User can go to a stop page or by clicking a line in a stop, to a stop page for a line
+User can go to a stop page for a line or by clicking a line in a stop
+or to a stop page for a line
 Lines that don't run for the selected day will be grayed out
-### Stop page - e.g. Plac Litewski 02 - inspired by wtp.waw.pl
-User can go to a stop page for a line from here
-Add filtering by line and highlighting the soonest departures
+### Stop page - inspired by jakdojade.pl "Departures"
+Ability to choose which lines are displayed and also a button to select all
+
+### By clicking on a specific trip in a stop page or a stop page for a line we'll be redirected to a trip view
 
 
 ## Future features
