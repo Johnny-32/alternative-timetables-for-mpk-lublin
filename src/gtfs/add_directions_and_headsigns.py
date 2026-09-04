@@ -33,7 +33,6 @@ def main(files):
     )
 
 
-
     # Adding route_id and stop_name columns to stop_times df
 
     merged = stop_times.merge(trips[['trip_id', 'route_id']], on='trip_id')
@@ -80,6 +79,10 @@ def main(files):
     trips = trips[~trips['trip_id'].isin(two_stop_trips_to_remove)]
     stop_times = stop_times[~stop_times['trip_id'].isin(two_stop_trips_to_remove)]
     merged = merged[~merged['trip_id'].isin(two_stop_trips_to_remove)]
+
+    # Removing stops from stops.txt, that don't have any stop times
+
+    stops = stops[stops['stop_id'].isin(stop_times['stop_id'])]
 
 
     # Adding trip_headsign
