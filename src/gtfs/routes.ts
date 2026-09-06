@@ -1,13 +1,19 @@
 import {getRoutes} from "gtfs";
 
-type VehicleType = 'bus' | 'trolleybus' | 'night';
+export type VehicleType = 'bus' | 'trolleybus' | 'night';
 
-type RouteDetails = {
+export const typeOrder: Record<VehicleType, number> = {
+    bus: 0,
+    trolleybus: 1,
+    night: 2
+}
+
+export type RouteDetails = {
     routeShortName: string;
     type: VehicleType;
 };
 
-type RouteData = Map<string, RouteDetails>; // string is a route_id
+export type RouteData = Map<string, RouteDetails>; // key = route_id
 
 export function getRouteTypes(): RouteData {
     const routeData: RouteData = new Map<string, RouteDetails>

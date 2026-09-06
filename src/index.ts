@@ -1,6 +1,6 @@
 import {closeDb} from "gtfs";
 import {loadGtfs} from "./gtfs/loader.js";
-import {getStopGroups} from "./gtfs/stops.js"
+import {getLinesForStop, getStopGroups} from "./gtfs/stops.js"
 
 const db = loadGtfs();
 
@@ -19,10 +19,16 @@ const db = loadGtfs();
 //     console.log(routeTypes);
 // }
 
+// try {
+//     const stopGroupList = getStopGroups();
+//     console.log(stopGroupList);
+// }
+
 try {
-    const stopGroupList = getStopGroups();
-    console.log(stopGroupList);
+    const lines = getLinesForStop('1042');
+    console.log(lines);
 }
+
 finally {
     closeDb(db);
 }
