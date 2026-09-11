@@ -3,10 +3,7 @@ import {getTrips, getStoptimes} from "gtfs";
 type RouteVariant = {
     stopIds: string[];
     frequency: number;
-};
-
-type Stop = {
-    id: string;
+    tripIds: string[];
 };
 
 type RouteChangeType = 'shorterTerminusFromStart' | 'shorterTerminusFromEnd'
@@ -20,10 +17,13 @@ type RouteChange = {
     stopIds?: string[];
     skippedStopIds?: string[];
     frequency: number;
+    tripIds: string[];
 };
 
 type RouteData = {
-    stops: string[];
+    mainStops: string[];
+    mainFrequency: number;
+    mainTripIds: string[];
     changes: RouteChange[];
 };
 
@@ -52,7 +52,8 @@ export function getVariantsForRoute(routeId: string) {
         const routeVariants: RouteVariant[] = [];
 
         for (const trip of trips) {
-            const stopIds = getStoptimes({ trip_id: trip.trip_id }, ['stop_id'])
+            const tripId = trip.trip_id;
+            const stopIds = getStoptimes({ trip_id: tripId }, ['stop_id'])
                 .map(stopTime => stopTime.stop_id!);
 
             const existingVariant = routeVariants.find(
@@ -60,10 +61,12 @@ export function getVariantsForRoute(routeId: string) {
 
             if (existingVariant) {
                 existingVariant.frequency++;
+                existingVariant.tripIds.push(tripId);
             } else {
                 routeVariants.push({
                     stopIds,
-                    frequency: 1
+                    frequency: 1,
+                    tripIds: [tripId],
                 });
             }
         }
@@ -76,7 +79,7 @@ export function getVariantsForRoute(routeId: string) {
     return stopIdsToReturn;
 }
 
-function getRouteChange(
+function getRouteChangesForVariant(
     mainStops: string[],
     variant: RouteVariant
 ): RouteChange[] | null {
@@ -88,6 +91,8 @@ function getRouteChange(
     let lastSharedStop: string | undefined = undefined;
 
     let mainIndex: number | undefined = undefined;
+
+    const tripIds = variant.tripIds;
 
     for (const variantStop of variantStops) {
         mainIndex = mainStops.indexOf(variantStop);
@@ -102,6 +107,7 @@ function getRouteChange(
                     toStopId: variantStop,
                     skippedStopIds: skippedStops,
                     frequency,
+                    tripIds,
                 });
             }
 
@@ -119,6 +125,7 @@ function getRouteChange(
                         stopIds: routeChangeStops,
                         ...(skippedStops.length > 0 ? {skippedStopIds: skippedStops}: {}),
                         frequency,
+                        tripIds,
                     });
                 } else {
                     routeChangeList.push({
@@ -126,6 +133,7 @@ function getRouteChange(
                         toStopId: variantStop,
                         stopIds: routeChangeStops,
                         frequency,
+                        tripIds,
                     });
                 }
 
@@ -141,6 +149,7 @@ function getRouteChange(
                         toStopId: variantStop,
                         skippedStopIds: skippedStops,
                         frequency,
+                        tripIds,
                     });
                 }
             }
@@ -157,6 +166,7 @@ function getRouteChange(
             toStopId: variantStops[variantStops.length - 1]!,
             skippedStopIds: mainStops.slice(mainIndex + 1),
             frequency,
+            tripIds,
         });
     }
 
@@ -166,6 +176,7 @@ function getRouteChange(
             ...(lastSharedStop ? { fromStopId: lastSharedStop } : {}),
             stopIds: routeChangeStops,
             frequency,
+            tripIds,
         });
     }
 
@@ -182,13 +193,15 @@ function aggregateRouteChanges(changes: RouteChange[]): RouteChange[] {
             change.fromStopId ?? '',
             change.toStopId ?? '',
             (change.stopIds ?? []).join(','),
-            (change.skippedStopIds ?? []).join(',')
+            (change.skippedStopIds ?? []).join(','),
+            change.tripIds,
         ].join('|');
 
         const existing = changeMap.get(key);
 
         if (existing) {
             existing.frequency += change.frequency;
+            existing.tripIds.concat(change.tripIds);
         } else {
             changeMap.set(key, { ...change });
         }
@@ -203,15 +216,17 @@ export function getRouteData(routeId: string): Map<number, RouteData> {
 
     for (const [directionId, variants] of variantsForRoute) {
         const mainVariant = variants[0];
+        const mainFrequency = mainVariant!.frequency;
+        const mainTripIds = mainVariant!.tripIds;
 
-        const stops: string[] = mainVariant!.stopIds;
+        const mainStops: string[] = mainVariant!.stopIds;
 
         const rawChanges: RouteChange[] = [];
 
         for (const variant of variants.slice(1)) {
-            const variantChanges = getRouteChange(
+            const variantChanges = getRouteChangesForVariant(
                 mainVariant!.stopIds,
-                variant
+                variant,
             );
 
             if (variantChanges) {
@@ -222,7 +237,9 @@ export function getRouteData(routeId: string): Map<number, RouteData> {
         const aggregatedChanges = aggregateRouteChanges(rawChanges);
 
         result.set(directionId, {
-            stops,
+            mainStops,
+            mainFrequency,
+            mainTripIds,
             changes: aggregatedChanges,
         });
     }
