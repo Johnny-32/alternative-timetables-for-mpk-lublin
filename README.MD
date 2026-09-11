@@ -70,13 +70,14 @@ Ability to choose which lines are displayed and also a button to select all
 
 
 ## Roadmap
-- Make timetables for each line/stop combination, just like MPK Lublin
-- Make a custom template for these timetables
-- Make PDF files with timetables, like in main-python branch
-- Add checking for new GTFS files and automatically downloading them
+- [ ] Make timetables for each line/stop combination, just like MPK Lublin
+- [ ] Make a custom template for these timetables
+- [ ] Make PDF files with timetables, like in main-python branch
+- [ ]Add checking for new GTFS files and automatically downloading them
 
 ## In the distant future
-- For each stop add a next stop name for easier stop identification (inspired by wtp.waw.pl)
+- Make map-first website (inspired by mpk.krakow.pl)
+- For each stop add a next stop name for easier stop identification (inspired by wtp.waw.pl) e.g. Plac Litewski 01 >> Ogród Saski
 - Compatibility with GTFS data of other cities than Lublin
 - GTFS-RT compatibility (realtime departures, route changes)
 - Trip planner via OpenTripPlanner
