@@ -1,4 +1,6 @@
 import {getTrips, getStoptimes} from "gtfs";
+import {loadGtfs} from "./loader.js";
+import {getStopName, getStopNameWithStopCode} from "./stops.js";
 
 type RouteVariant = {
     stopIds: string[];
@@ -18,6 +20,7 @@ type RouteChange = {
     skippedStopIds?: string[];
     frequency: number;
     tripIds: string[];
+    annotation?: string;
 };
 
 type RouteData = {
@@ -26,6 +29,13 @@ type RouteData = {
     mainTripIds: string[];
     changes: RouteChange[];
 };
+
+type StopHelper = {
+    stop_id: string;
+    stop_name: string;
+    stop_code: string;
+    street_name: string;
+}
 
 
 function arraysEqual(a: string[], b: string[]): boolean {
@@ -183,6 +193,113 @@ function getRouteChangesForVariant(
     return routeChangeList.length > 0 ? routeChangeList : null;
 }
 
+function sortStopsWithGuide(sorted: string[], toSort: StopHelper[], attribute: keyof StopHelper): string[] {
+    return sorted.map(id => toSort
+        .find(stop => stop.stop_id === id)?.[attribute]).filter(Boolean) as string[];
+}
+
+function getRouteChangeDescription(mainStops: RouteData["mainStops"], change: RouteChange): string | null {
+    const db = loadGtfs();
+
+    switch (change.type) {
+        case 'shortcut': {
+            const { fromStopId, toStopId, skippedStopIds } = change;
+
+            const mainRouteStopIds = [fromStopId!, ...skippedStopIds!, toStopId!];
+            const placeholdersMain = mainRouteStopIds.map(() => '?').join(',');
+
+            const mainStops = db
+                .prepare(`SELECT stop_id, stop_name, stop_code, street_name FROM stops 
+                WHERE stop_id IN (${placeholdersMain})`)
+                .all(...mainRouteStopIds) as StopHelper[];
+
+            const mainStreets = mainStops.map(stop => stop.street_name);
+
+            const shortcutStopIds = [fromStopId, toStopId];
+            const placeholdersShortcut = shortcutStopIds.map(() => '?').join(',');
+
+            const shortcutStops = db
+                .prepare(`SELECT stop_id, stop_name, street_name FROM stops 
+                WHERE stop_id IN (${placeholdersShortcut})`)
+                .all(...shortcutStopIds) as StopHelper[];
+
+            const shortcutStreets = shortcutStops.map(stop => stop.street_name);
+
+            const skippedStreetsRaw = mainStreets.filter(
+                shortcutStreet => !shortcutStreets.includes(shortcutStreet));
+            const skippedStreets = Array.from(new Set(skippedStreetsRaw));
+
+            if (skippedStopIds?.length === 1) {
+                const [skippedStopId] = skippedStopIds
+                const skippedStopName = getStopName(skippedStopId!);
+                if (skippedStopName == getStopName(fromStopId!) || skippedStopName == getStopName(toStopId!)) {
+                    return `Kurs z pominięciem ${getStopNameWithStopCode(skippedStopId!)}`;
+                } else {
+                    return `Kurs z pominięciem ${skippedStopName}`;
+                }
+            } else if (skippedStreets.length === 0) {
+                const skippedStopsFormatted = skippedStopIds!.map(stop => getStopNameWithStopCode(stop))
+                    .join(', ');
+                return `Kurs z pominięciem przystanków: ${skippedStopsFormatted}`;
+            } else {
+                const skippedStreetsString = skippedStreets.join(', ');
+                if (skippedStreets.length === 1) {
+                    return `Kurs z pominięciem ulicy: ${skippedStreetsString}`;
+                } else {
+                    return `Kurs z pominięciem ulic: ${skippedStreetsString}`;
+                }
+            }
+        }
+
+        case "diffRouting": {
+            const { fromStopId, toStopId, stopIds, skippedStopIds } = change;
+
+            const mergedStopIds: string[] = [fromStopId!, ...stopIds!, toStopId!];
+            const placeholdersVariant = mergedStopIds.map(() => '?').join(',');
+
+            const variantStops = db
+                .prepare(`SELECT stop_id, stop_name, stop_code FROM stops
+                WHERE stop_id IN (${placeholdersVariant})`)
+                .all(...mergedStopIds) as StopHelper[];
+
+            const variantStopNames = sortStopsWithGuide(mergedStopIds, variantStops, 'stop_name');
+
+            const mergedSkippedStopIds = [fromStopId, ...(skippedStopIds ?? []), toStopId];
+            const placeholdersSkipped = mergedSkippedStopIds.map(() => '?').join(',')
+
+            const skippedStops = db
+                .prepare(`SELECT stop_id, stop_name, stop_code FROM stops
+                WHERE stop_id IN (${placeholdersSkipped})`)
+                .all(...mergedSkippedStopIds) as StopHelper[];
+
+            const skippedStopNames = skippedStops.map(stop => stop.stop_name);
+
+            const uniqueVariantStopNames = variantStopNames.filter(
+                varStop => !skippedStopNames.includes(varStop));
+
+            if (uniqueVariantStopNames.length === 0) {
+                return `Kurs przez ${variantStopNames[0]}`;
+            }
+
+            const middleStopNameIndex = Math.floor((uniqueVariantStopNames.length - 1) / 2);
+            const middleStopName = uniqueVariantStopNames[middleStopNameIndex];
+
+            return `Kurs przez ${middleStopName}`;
+        }
+
+        case 'shorterTerminusFromEnd':
+            return `Kurs skrócony do ${getStopName(change.toStopId!)}`;
+
+        case 'longerTerminusFromEnd':
+            const stopIds = change.stopIds!;
+            const lastStop = getStopName(stopIds[stopIds.length - 1]!)
+            return `Kurs przedłużony do ${lastStop}`;
+
+        default:
+            return null;
+    }
+}
+
 
 function aggregateRouteChanges(changes: RouteChange[]): RouteChange[] {
     const changeMap = new Map<string, RouteChange>;
@@ -194,16 +311,17 @@ function aggregateRouteChanges(changes: RouteChange[]): RouteChange[] {
             change.toStopId ?? '',
             (change.stopIds ?? []).join(','),
             (change.skippedStopIds ?? []).join(','),
-            change.tripIds,
         ].join('|');
 
         const existing = changeMap.get(key);
 
         if (existing) {
             existing.frequency += change.frequency;
-            existing.tripIds.concat(change.tripIds);
+            existing.tripIds.push(...change.tripIds);
         } else {
-            changeMap.set(key, { ...change });
+            changeMap.set(key, {
+                ...change,
+                tripIds: [...change.tripIds]});
         }
     }
 
@@ -236,6 +354,13 @@ export function getRouteData(routeId: string): Map<number, RouteData> {
 
         const aggregatedChanges = aggregateRouteChanges(rawChanges);
 
+        for (const change of aggregatedChanges) {
+            const annotation = getRouteChangeDescription(mainStops, change)
+            if (annotation) {
+                change.annotation = annotation;
+            }
+        }
+
         result.set(directionId, {
             mainStops,
             mainFrequency,
@@ -245,4 +370,14 @@ export function getRouteData(routeId: string): Map<number, RouteData> {
     }
 
     return result;
+}
+
+function getChangesByTrip(routeId: string, directionId: number, tripId: string): RouteChange[]{
+    const changes = getRouteData(routeId).get(directionId)?.changes;
+
+    if (!changes) {
+        return [];
+    }
+
+    return changes.filter(change => change.tripIds.includes(tripId));
 }
