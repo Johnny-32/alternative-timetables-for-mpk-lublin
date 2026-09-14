@@ -1,6 +1,6 @@
 import {loadGtfs} from "./loader.js";
 import {getStoptimes, getTrips} from "gtfs";
-import {getRouteTypes, type RouteData} from "./routes.js"
+import {getRouteTypes} from "./routes.js"
 import {typeOrder} from "./routes.js"
 
 type GeographicCoordinates = {
@@ -107,4 +107,34 @@ export function getStopGroups(): StopGroup[] {
     return Array.from(stopGroupsMap, ([name, stops]) => ({
         name, stops
     }));
+}
+
+export function getStopNameWithStopCode(stopId: string) {
+    const db = loadGtfs();
+
+    const stop = db
+        .prepare(`SELECT stop_name, stop_code FROM stops WHERE stop_id = ?`)
+        .get(stopId) as { stop_name: string; stop_code: string | null} | undefined;
+
+    if (!stop) {
+        console.warn(`[GTFS] Missing stop in database for stop_id: ${stopId}`);
+        return stopId;
+    }
+
+    return stop.stop_code ? `${stop.stop_name} ${stop.stop_code}` : stop.stop_name;
+}
+
+export function getStopName(stopId: string) {
+    const db = loadGtfs();
+
+    const stop = db
+        .prepare(`SELECT stop_name FROM stops WHERE stop_id = ?`)
+        .get(stopId) as { stop_name: string} | undefined;
+
+    if (!stop) {
+        console.warn(`[GTFS] Missing stop in database for stop_id: ${stopId}`);
+        return stopId;
+    }
+
+    return stop.stop_name;
 }

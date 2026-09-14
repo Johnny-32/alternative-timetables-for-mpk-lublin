@@ -12,7 +12,7 @@ type ServiceIdsByDate = Map<number, string[]>
 
 type DatesByServiceId = Map<string, number[]>
 
-export function getDatesFromCalendarDates() {
+function getDatesFromCalendarDates() {
     const rows = getCalendarDates();
 
     return [...new Set(
@@ -20,10 +20,12 @@ export function getDatesFromCalendarDates() {
     )].sort((a, b) => a - b);
 }
 
-export function getServiceIdsAndDates(dates: number[]): {
+export function getServiceIdsAndDates(): {
     serviceIdsByDate: ServiceIdsByDate,
     datesByServiceId: DatesByServiceId
 }  {
+    const dates = getDatesFromCalendarDates();
+
     const serviceIdsByDate = new Map<number, string[]>();
     const datesByServiceId = new Map<string, number[]>();
 
