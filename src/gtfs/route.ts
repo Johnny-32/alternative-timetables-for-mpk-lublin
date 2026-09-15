@@ -10,9 +10,10 @@ type RouteVariant = {
 
 type RouteChangeType = 'shorterTerminusFromStart' | 'shorterTerminusFromEnd'
     | 'longerTerminusFromStart' | 'longerTerminusFromEnd'
+    | 'diffTerminusFromStart' | 'diffTerminusFromEnd'
     | 'diffRouting' | 'shortcut';
 
-type RouteChange = {
+export type RouteChange = {
     type: RouteChangeType;
     fromStopId?: string;
     toStopId?: string;
@@ -23,10 +24,11 @@ type RouteChange = {
     annotation?: string;
 };
 
-type RouteData = {
+export type RouteData = {
     mainStops: string[];
     mainFrequency: number;
     mainTripIds: string[];
+    stopIdList: string[];
     changes: RouteChange[];
 };
 
@@ -137,15 +139,31 @@ function getRouteChangesForVariant(
                         frequency,
                         tripIds,
                     });
-                } else {
-                    routeChangeList.push({
-                        type: "longerTerminusFromStart",
-                        toStopId: variantStop,
-                        stopIds: routeChangeStops,
-                        frequency,
-                        tripIds,
-                    });
-                }
+                } else
+                    // Longer version of main
+                    // e.g. main: A - B - C
+                    //      variant: X - Y - A - B - C
+                    if (variantStop === mainStops[0]) {
+                        routeChangeList.push({
+                            type: "longerTerminusFromStart",
+                            toStopId: variantStop,
+                            stopIds: routeChangeStops,
+                            frequency,
+                            tripIds,
+                        });
+                    } else {
+                        // e.g. main: A - B - C
+                        //      variant: X - Y - B - C
+                        const skippedStopIds = mainStops.slice(0, mainStops.indexOf(variantStop));
+                        routeChangeList.push({
+                            type: "diffTerminusFromStart",
+                            toStopId: variantStop,
+                            stopIds: routeChangeStops,
+                            skippedStopIds,
+                            frequency,
+                            tripIds,
+                        });
+                    }
 
                 routeChangeStops = [];
             } else {
@@ -180,14 +198,26 @@ function getRouteChangesForVariant(
         });
     }
 
-    if (routeChangeStops.length !== 0) {
-        routeChangeList.push({
-            type: "longerTerminusFromEnd",
-            ...(lastSharedStop ? { fromStopId: lastSharedStop } : {}),
-            stopIds: routeChangeStops,
-            frequency,
-            tripIds,
-        });
+    if (routeChangeStops.length !== 0 && lastSharedStop) {
+        if (lastSharedStop === mainStops[mainStops.length]) {
+            routeChangeList.push({
+                type: "longerTerminusFromEnd",
+                fromStopId: lastSharedStop,
+                stopIds: routeChangeStops,
+                frequency,
+                tripIds,
+            });
+        } else {
+            const skippedStopIds = mainStops.slice(mainStops.indexOf(lastSharedStop) + 1, mainStops.length);
+            routeChangeList.push({
+                type: "diffTerminusFromEnd",
+                fromStopId: lastSharedStop,
+                stopIds: routeChangeStops,
+                skippedStopIds,
+                frequency,
+                tripIds,
+            });
+        }
     }
 
     return routeChangeList.length > 0 ? routeChangeList : null;
@@ -290,10 +320,16 @@ function getRouteChangeDescription(mainStops: RouteData["mainStops"], change: Ro
         case 'shorterTerminusFromEnd':
             return `Kurs skrócony do ${getStopName(change.toStopId!)}`;
 
-        case 'longerTerminusFromEnd':
+        case 'longerTerminusFromEnd': {
             const stopIds = change.stopIds!;
             const lastStop = getStopName(stopIds[stopIds.length - 1]!)
             return `Kurs przedłużony do ${lastStop}`;
+        }
+
+        case "diffTerminusFromEnd": {
+            const lastStop = getStopName(change.stopIds![change.stopIds!.length - 1]!);
+            return `Kurs do ${lastStop}`;
+        }
 
         default:
             return null;
@@ -361,15 +397,51 @@ export function getRouteData(routeId: string): Map<number, RouteData> {
             }
         }
 
+        const stopIdList = getStopIdList(mainStops, aggregatedChanges);
+
         result.set(directionId, {
             mainStops,
             mainFrequency,
             mainTripIds,
+            stopIdList,
             changes: aggregatedChanges,
         });
     }
 
     return result;
+}
+
+export function getStopIdList(mainStops: RouteData["mainStops"], changes: RouteChange[]) {
+    let stopIdList = [...mainStops];
+
+    for (const change of changes) {
+        const stopIdsToAdd = change.stopIds;
+
+        switch (change.type) {
+            case "longerTerminusFromEnd":
+                stopIdList.push(...stopIdsToAdd!);
+                break;
+
+            case "diffTerminusFromEnd":
+                stopIdList.splice(mainStops.indexOf(change.fromStopId! + 1), 0, ...stopIdsToAdd!);
+                break;
+
+            case "longerTerminusFromStart":
+                stopIdList.unshift(...stopIdsToAdd!);
+                break;
+
+            case "diffTerminusFromStart":
+                stopIdList.splice(mainStops.indexOf(change.toStopId!), 0, ...stopIdsToAdd!);
+                break;
+
+            case "diffRouting":
+                const fromStopIdIndex = stopIdList.indexOf(change.fromStopId!);
+                stopIdList.splice(fromStopIdIndex + 1, 0, ...stopIdsToAdd!);
+                break;
+        }
+    }
+
+    return stopIdList;
 }
 
 function getChangesByTrip(routeId: string, directionId: number, tripId: string): RouteChange[]{
