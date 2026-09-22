@@ -199,7 +199,7 @@ function getRouteChangesForVariant(
     }
 
     if (routeChangeStops.length !== 0 && lastSharedStop) {
-        if (lastSharedStop === mainStops[mainStops.length]) {
+        if (lastSharedStop === mainStops[mainStops.length - 1]) {
             routeChangeList.push({
                 type: "longerTerminusFromEnd",
                 fromStopId: lastSharedStop,
@@ -423,7 +423,11 @@ export function getStopIdList(mainStops: RouteData["mainStops"], changes: RouteC
                 break;
 
             case "diffTerminusFromEnd":
-                stopIdList.splice(mainStops.indexOf(change.fromStopId! + 1), 0, ...stopIdsToAdd!);
+                if (change.stopIds!.length > change.skippedStopIds!.length) {
+                    stopIdList.splice(0, 0, ...stopIdsToAdd!);
+                } else {
+                    stopIdList.splice(stopIdList.indexOf(change.fromStopId! + 1), 0, ...stopIdsToAdd!);
+                }
                 break;
 
             case "longerTerminusFromStart":
@@ -431,7 +435,12 @@ export function getStopIdList(mainStops: RouteData["mainStops"], changes: RouteC
                 break;
 
             case "diffTerminusFromStart":
-                stopIdList.splice(mainStops.indexOf(change.toStopId!), 0, ...stopIdsToAdd!);
+                if (change.stopIds!.length > change.skippedStopIds!.length) {
+                    stopIdList.splice(stopIdList.indexOf(change.skippedStopIds![0]!), 0, ...stopIdsToAdd!);
+                } else {
+                    stopIdList.splice(stopIdList.indexOf(change.toStopId!), 0, ...stopIdsToAdd!);
+                }
+
                 break;
 
             case "diffRouting":
@@ -441,10 +450,19 @@ export function getStopIdList(mainStops: RouteData["mainStops"], changes: RouteC
         }
     }
 
-    return stopIdList;
+    return [...new Set(stopIdList)];
 }
 
-function getChangesByTrip(routeId: string, directionId: number, tripId: string): RouteChange[]{
+export function getStopNameList(stopIdList: string[]) {
+    const stopNameList = [];
+    for (const stId of stopIdList) {
+        stopNameList.push(getStopNameWithStopCode(stId));
+    }
+
+    return stopNameList;
+}
+
+export function getChangesByTrip(routeId: string, directionId: number, tripId: string): RouteChange[]{
     const changes = getRouteData(routeId).get(directionId)?.changes;
 
     if (!changes) {

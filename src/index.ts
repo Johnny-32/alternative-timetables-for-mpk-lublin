@@ -1,9 +1,9 @@
 import {closeDb} from "gtfs";
 import {loadGtfs} from "./gtfs/loader.js";
 import {getLinesForStop, getStopGroups} from "./gtfs/stops.js"
-import {getRouteData, getVariantsForRoute} from "./gtfs/route.js";
+import {getRouteData, getStopIdList, getStopNameList, getVariantsForRoute} from "./gtfs/route.js";
 import {
-    getAllSchedulesForLineAndStop,
+    getAllSchedulesForLineAndStop, getChangesToDisplayOnThisStopAndLine,
     getDayOfWeekString,
     getDisplayDayAndMonth,
     getHourGroupsForStopAndLineAndServiceId
@@ -38,7 +38,7 @@ const db = loadGtfs();
 // }
 
 // try {
-//     const res = getRouteData('55');
+//     const res = getRouteData('8');
 //     console.dir(res, {depth: null});
 // }
 
@@ -53,10 +53,33 @@ const db = loadGtfs();
 //     console.dir(datesByServiceId, { depth: null });
 // }
 
+// try {
+//     const res = getAllSchedulesForLineAndStop('N2', 0, '1042');
+//     console.dir(res, { depth: null });
+// }
+
 try {
-    const res = getAllSchedulesForLineAndStop('N2', 0, '1042');
-    console.dir(res, { depth: null });
+    const routeData = getRouteData('7');
+    const routeDataDir = routeData.get(0);
+    const changesRd = routeDataDir?.changes;
+    const mainRd = routeDataDir?.mainStops;
+    const changes = getChangesToDisplayOnThisStopAndLine('6752', mainRd!, changesRd!);
+
+    console.dir(changes, { depth: null });
 }
+
+// try {
+//     console.dir(getRouteData('55'), { depth: null });
+// }
+
+// try {
+//     const routeData = getRouteData('55');
+//     const routeDataDir = routeData.get(1);
+//     const changesRd = routeDataDir?.changes;
+//     const mainRd = routeDataDir?.mainStops;
+//     const stopIdList = getStopIdList(mainRd!, changesRd!);
+//     console.log(getStopNameList(stopIdList));
+// }
 
 finally {
     closeDb(db);

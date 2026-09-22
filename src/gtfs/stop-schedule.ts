@@ -1,7 +1,6 @@
-import {getRouteData} from "./route.js";
+import {type RouteData, type RouteChange, getChangesByTrip, getStopIdList} from "./route.js";
 import {getCalendarDates, getTrips} from "gtfs";
 import {getStoptimes} from "gtfs";
-import {parse} from "csv-parse/sync";
 import {getServiceIdsAndDates} from "./services.js";
 
 export type NoteItem = {
@@ -47,8 +46,6 @@ export function getHourGroupsForStopAndLineAndServiceId(serviceId: string,
         .join(':'))
         .sort();
 
-    // Fix hours that are 25 and bigger
-
     const hourGroupsMap = new Map<string, MinuteItem[]>();
 
     stopTimes.forEach(stopTime => {
@@ -74,7 +71,6 @@ export function getHourGroupsForStopAndLineAndServiceId(serviceId: string,
         .map(([hour, minutes]) => ({ hour, minutes }));
 
     return hourGroups;
-
 }
 
 function getIsoDateString(calendarDate: number) {
@@ -98,6 +94,15 @@ export function getDayOfWeekString(isoDateString: string): string { // e.g. Czw.
     return days[dayOfWeekIdx]!;
 }
 
+function getTripIdsForStopAndLine(routeId: string, directionId: number, stopId: string): string[] {
+    const trips = getTrips({ route_id: routeId, direction_id: directionId, });
+    const routeTripIds = trips.map(trip => trip.trip_id);
+
+    const stopTimes = getStoptimes({ trip_id: routeTripIds, stop_id: stopId });
+
+    return Array.from(new Set(stopTimes.map(stop => stop.trip_id)));
+}
+
 function getServiceIdsForStopAndLine(routeId: string, directionId: number, stopId: string): string[] {
     const trips = getTrips({ route_id: routeId, direction_id: directionId, });
     const routeTripIds = trips.map(trip => trip.trip_id);
@@ -118,7 +123,7 @@ function getServiceIdsForStopAndLine(routeId: string, directionId: number, stopI
 }
 
 
-export function getStopTimesForInstanceForServiceId(
+export function getSchedulesForInstanceForServiceId(
     serviceId: string, routeId: string, directionId: number, stopId: string): ScheduleForDay[] {
 
     const { datesByServiceId } = getServiceIdsAndDates();
@@ -156,10 +161,41 @@ export function getAllSchedulesForLineAndStop(routeId: string, directionId: numb
 
     for (const serviceId of serviceIds) {
         const schedulesForServiceId: ScheduleForDay[] =
-            getStopTimesForInstanceForServiceId(serviceId, routeId, directionId,stopId);
+            getSchedulesForInstanceForServiceId(serviceId, routeId, directionId,stopId);
 
         allSchedules.push(...schedulesForServiceId);
     }
 
     return allSchedules;
+}
+
+export function getChangesToDisplayOnThisStopAndLine(
+    stopId: string, mainStops: RouteData["mainStops"], changes: RouteChange[]): RouteChange[] {
+    const stopList = getStopIdList(mainStops, changes);
+
+    const changesToDisplay: RouteChange[] = [];
+    const stopIdIndex = stopList.indexOf(stopId);
+
+    if (stopIdIndex === -1) {
+        return [];
+    }
+
+    for (const change of changes) {
+        if (change.stopIds
+            && !change.stopIds.includes(stopId) && Object.hasOwn(change, 'annotation')
+            && change.stopIds.every(chStId => stopList.indexOf(chStId) > stopIdIndex)
+            && (change.skippedStopIds || []).every(skStId => stopList.indexOf(skStId) > stopIdIndex)) {
+
+            changesToDisplay.push(change)
+
+        } else if (change.skippedStopIds
+            && (change.type === 'shorterTerminusFromEnd' || change.type === 'shortcut')
+            && change.skippedStopIds.every(skStId => stopList.indexOf(skStId) > stopIdIndex)) {
+
+            changesToDisplay.push(change)
+
+        }
+    }
+
+    return changesToDisplay;
 }
